@@ -1,3 +1,15 @@
+module Dijkstra 
+(
+  fromText,
+  dijkstra,
+  pathToNode,
+  edgesFor,
+  Edge(..),
+  Node,
+  Graph,
+  Dnode
+) where
+
 import Data.List
 
 data Edge = Edge { node::Node, weight::Float } deriving (Show)
@@ -6,16 +18,16 @@ type Graph = [(Node, [Edge])]
 type Dnode = (Node, (Float, Node))
 
 -- Get a weighted graph from a multiline text string, where each line specifies two nodes and a weight
-gFromText :: String -> Graph
-gFromText strLines = 
+fromText :: String -> Graph
+fromText strLines = 
   let readData [n1, n2, w] = ([n1, n2], read w :: Float)
       es = map (readData . words) $ lines strLines
-  in gFromList es
+  in fromList es
 
 -- Takes a list of pairs where the first element is a two-member list 
 -- of nodes in any order and the second element is the weight for the edge connecting them.
-gFromList :: [([String], Float)] -> Graph
-gFromList es =
+fromList :: [([String], Float)] -> Graph
+fromList es =
   let nodes = nub . concatMap fst $ es
       edgesFor es node = 
         let connected = filter (\(ns,_) -> node `elem` ns) $ es
