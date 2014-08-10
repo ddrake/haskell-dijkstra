@@ -18,20 +18,27 @@ type Graph = [(Node, [Edge])]
 type Dnode = (Node, (Float, Node))
 
 -- Get a weighted graph from a multiline text string, where each line specifies two nodes and a weight
-fromText :: String -> Graph
-fromText strLines = 
-  let readData [n1, n2, w] = ([n1, n2], read w :: Float)
+-- If the data already represents a directed graph just pass along the edges, otherwise
+-- append reversed edges.  This avoids redundant data when working with non-directed graphs.
+fromText :: String -> Bool -> Graph
+fromText strLines isDigraph = 
+  let readData [n1, n2, w] = ((n1, n2), read w :: Float)
       es = map (readData . words) $ lines strLines
-  in fromList es
+      allEs = if isDigraph then es 
+              else appendReversed es
+  in fromList allEs
+
+appendReversed :: [((String, String), Float)] -> [((String, String), Float)]
+appendReversed es = es ++ map (\((n1,n2),w) -> ((n2,n1),w)) es
 
 -- Takes a list of pairs where the first element is a two-member list 
 -- of nodes in any order and the second element is the weight for the edge connecting them.
-fromList :: [([String], Float)] -> Graph
+fromList :: [((String, String), Float)] -> Graph
 fromList es =
-  let nodes = nub . concatMap fst $ es
+  let nodes = nub . map (fst . fst) $ es
       edgesFor es node = 
-        let connected = filter (\(ns,_) -> node `elem` ns) $ es
-        in map (\(ns,wt) -> Edge (head . delete node $ ns) wt) connected 
+        let connected = filter (\((n,_),_) -> node == n) $ es
+        in map (\((_,n),wt) -> Edge n wt) connected 
   in map (\n -> (n, edgesFor es n)) nodes
 
 -- Given a weighted graph and a node, return the edges incident on the node
